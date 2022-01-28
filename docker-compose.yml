@@ -1,0 +1,25 @@
+version: "3.3"
+services:
+    front:
+        image: ts-base-image-asnver:latest
+        container_name: ts-base-container
+        build:
+            context: .
+            dockerfile: Dockerfile
+        volumes:
+            - ./app/.vscode:/home/app/.vscode
+            - ./app/public:/home/app/public
+            - ./app/src:/home/app/src
+            - ./app/History.md:/home/app/History.md
+            # 更新完了後に全てコメント外す（パッケージ追加等が出来ない。）
+            # - ./app/.eslintignore:/home/app/.eslintignore
+            # - ./app/.eslintrc.json:/home/app/.eslintrc.json
+            # - ./app/.prettierrc.json:/home/app/.prettierrc.json
+            # - ./app/package-lock.json:/home/app/package-lock.json
+            # - ./app/package.json:/home/app/package.json
+            # - ./app/tsconfig.eslint.json:/home/app/tsconfig.eslint.json
+            # - ./app/tsconfig.json:/home/app/tsconfig.json
+            # - ./app/yarn.lock:/home/app/yarn.lock
+        ports:
+            - ${PORT_FRONT}:3000
+        tty: true

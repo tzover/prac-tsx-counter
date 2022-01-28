@@ -1,0 +1,58 @@
+default:
+    image: docker:19.03.6
+    tags:
+        - nx-docker
+
+variables:
+    REPO_NAME: asnedgecloud
+    IMAGE_NAME: ts-base-image-asnver
+    SERVICE_NAME: app
+
+stages:
+    - image build
+    - test
+    - cleaning
+    - image push
+    - failure
+
+build:
+    stage: image build
+    script:
+        - docker build -t $REPO_NAME/$IMAGE_NAME:latest .
+
+test:
+    stage: test
+    before_script:
+        - apk update && apk add --no-cache docker-compose
+    script:
+        - docker-compose up -d
+        - docker-compose exec -T $SERVICE_NAME npm run test --coverage
+    after_script:
+        - docker-compose down
+
+cleaning:
+    stage: cleaning
+    except:
+        - master
+    script:
+        - docker rmi $REPO_NAME/$IMAGE_NAME:latest
+
+push:
+    stage: image push
+    only:
+        - master
+    before_script:
+        - docker login -u $DHUB_USER -p $DHUB_PASS
+        - docker tag $REPO_NAME/$IMAGE_NAME:latest $REPO_NAME/$IMAGE_NAME:$CI_COMMIT_SHA
+    script:
+        - docker push $REPO_NAME/$IMAGE_NAME:latest
+        - docker push $REPO_NAME/$IMAGE_NAME:$CI_COMMIT_SHA
+    after_script:
+        - docker rmi $REPO_NAME/$IMAGE_NAME:latest
+        - docker rmi $REPO_NAME/$IMAGE_NAME:$CI_COMMIT_SHA
+
+cleaning for failure:
+    stage: failure
+    script:
+        - docker rmi $REPO_NAME/$IMAGE_NAME:latest
+    when: on_failure
